@@ -91,12 +91,12 @@ int CALLBACK wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	const HANDLE mutex = CreateMutex(NULL, TRUE, L"{05B95384-625D-491A-A326-94758957C021}");
 	if (!mutex)
 	{
-		ShowErrorMessageBox(L"The mutex could not be created!\nError code: %lu", GetLastError());
+		ShowErrorMessageBox(L"无法创建互斥体(mutex)！\错误代码：%lu", GetLastError());
 		return EXIT_FAILURE;
 	}
 	if (GetLastError() == ERROR_ALREADY_EXISTS || GetLastError() == ERROR_ACCESS_DENIED)
 	{
-		ShowErrorMessageBox(L"Only one instance at a time!");
+		ShowErrorMessageBox(L"仅允许同时运行一个程序！");
 		return EXIT_SUCCESS;
 	}
 
@@ -109,13 +109,13 @@ int CALLBACK wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 		// hWndParent is not HWND_MESSAGE because message-only windows don't receive broadcast messages like TaskbarCreated.
 		if (!CreateWindow(CLASSNAME, APPNAME, 0, 0, 0, 0, 0, NULL, NULL, hInstance, NULL))
 		{
-			ShowErrorMessageBox(L"The window couldn't be created.\nError code: %lu", GetLastError());
+			ShowErrorMessageBox(L"无法创建窗口。\n错误代码：%lu", GetLastError());
 			PostQuitMessage(1);
 		}
 	}
 	else
 	{
-		ShowErrorMessageBox(L"The window class couldn't be registered.\nError code: %lu", GetLastError());
+		ShowErrorMessageBox(L"无法注册窗口类。\n错误代码：%lu", GetLastError());
 		PostQuitMessage(1);
 	}
 
@@ -134,7 +134,7 @@ int CALLBACK wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 		else
 		{
 			// It's extremely unlikely that GetMessage() will return -1 but just in case try to release the important stuff.
-			ShowErrorMessageBox(L"An unexpected error has occured.\nError code: %lu", GetLastError());
+			ShowErrorMessageBox(L"发生意外错误。\n错误代码：%lu", GetLastError());
 			UninstallMSLLHook();
 			ReleaseMutex(mutex);
 			CloseHandle(mutex);
@@ -295,14 +295,14 @@ static bool AddNotifyIcon(const HINSTANCE hInstance, const HWND hWnd, const bool
 	// Try to add the icon to the notification area...
 	if (!Shell_NotifyIcon(NIM_ADD, &notify_icon_data) && has_icon_been_shown == false)
 	{
-		ShowErrorMessageBox(L"The notify icon couldn't be added.\nError code: %lu", GetLastError());
+		ShowErrorMessageBox(L"无法添加托盘图标。\n错误代码：%lu", GetLastError());
 		return false;
 	}
 
 	// ...and to set it's version.
 	if (!Shell_NotifyIcon(NIM_SETVERSION, &notify_icon_data))
 	{
-		ShowErrorMessageBox(L"The requested NOTIFYICON_VERSION_4 isn't supported.");
+		ShowErrorMessageBox(L"不支持请求的 NOTIFYICON_VERSION_4。");
 		return false;
 	}
 
@@ -325,7 +325,7 @@ static bool InstallMSLLHook()
 	msll_hook = SetWindowsHookEx(WH_MOUSE_LL, LowLevelMouseProc, NULL, 0);
 	if (!msll_hook)
 	{
-		ShowErrorMessageBox(L"The mouse hook couldn't be installed.\nError code: %lu", GetLastError());
+		ShowErrorMessageBox(L"无法安装鼠标钩子。\n错误代码：%lu", GetLastError());
 		return false;
 	}
 	return true;
@@ -396,9 +396,9 @@ static void PrepareMouseButtonData()
 	{
 		// That shouldn't happen for systems that run on Windows XP or later.
 		ShowErrorMessageBox(
-			L"Apparently your system doesn't support the high-resolution performance counter."
-			L"Please remove -q; --qpc from the command line parameters."
-			L"Switching to the ordinary timing method now.");
+			L"您的系统不支持高分辨率性能计数器。"
+			L"请从命令行参数中移除：-q、--qpc。"
+			L"程序将切换到传统计时器。");
 		use_qpc = false;
 	}
 
@@ -443,7 +443,7 @@ static void SetDoubleClickThreshold(const int threshold, const MouseButton butto
 			mouse_button_data[button].thresholdMs = threshold;
 	}
 	else
-		ShowErrorMessageBox(L"Invalid threshold for '%s Mouse Button': %d (min: %I32ums max: %I32ums)",
+		ShowErrorMessageBox(L"为鼠标按键“%s”设置的阈值无效：%d（最小值：%I32ums，最大值%I32um）。",
 			GetButtonName(button), threshold, double_click_threshold_ms_min, double_click_threshold_ms_max);
 }
 
@@ -464,7 +464,7 @@ static void ShowContextMenu(const HWND hWnd, const int x, const int y)
 			totalblocks += mouse_button_data[i].blocks;
 
 		// Add general information.
-		StringCchPrintf(buffer, 64, L"General\t%6I32u blocks       %03I32u ms", totalblocks, double_click_threshold_ms);
+		StringCchPrintf(buffer, 64, L"总体\t%6I32u 次连击       %03I32u ms", totalblocks, double_click_threshold_ms);
 		InsertMenu(hMenu, -1, MF_BYPOSITION | MF_STRING | MF_GRAYED, 0, buffer);
 		InsertMenu(hMenu, -1, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
 
@@ -473,7 +473,7 @@ static void ShowContextMenu(const HWND hWnd, const int x, const int y)
 		{
 			if (mouse_button_data[i].isMonitored)
 			{
-				StringCchPrintf(buffer, 64, L"%s Mouse Button\t%6I32u blocks       %03I32u ms",
+				StringCchPrintf(buffer, 64, L"%s\t%6I32u 次连击       %03I32u ms",
 				                GetButtonName(i), mouse_button_data[i].blocks, mouse_button_data[i].thresholdMs);
 				InsertMenu(hMenu, -1, MF_BYPOSITION | MF_STRING | MF_GRAYED, 0, buffer);
 			}
@@ -481,7 +481,7 @@ static void ShowContextMenu(const HWND hWnd, const int x, const int y)
 
 		// Add exit item.
 		InsertMenu(hMenu, -1, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
-		InsertMenu(hMenu, -1, MF_BYPOSITION | MF_STRING, IDM_EXIT, L"Exit");
+		InsertMenu(hMenu, -1, MF_BYPOSITION | MF_STRING, IDM_EXIT, L"退出");
 
 		// The window does not receive a WM_COMMAND message from the menu until the function returns.
 		TrackPopupMenu(hMenu, TPM_BOTTOMALIGN, x, y, 0, hWnd, NULL);
@@ -489,7 +489,7 @@ static void ShowContextMenu(const HWND hWnd, const int x, const int y)
 	}
 	else
 	{
-		ShowErrorMessageBox(L"The popup menu couldn't be created.\nError code: %lu", GetLastError());
+		ShowErrorMessageBox(L"无法创建弹出菜单。\错误代码：%lu", GetLastError());
 		PostMessage(hWnd, WM_CLOSE, 0, 0);
 	}
 }
@@ -528,12 +528,12 @@ static LPCWSTR GetButtonName(const MouseButton button)
 {
 	switch (button)
 	{
-		case MOUSE_BUTTON_LEFT:	return L"Left";
-		case MOUSE_BUTTON_RIGHT: return L"Right";
-		case MOUSE_BUTTON_MIDDLE: return L"Middle";
-		case MOUSE_BUTTON_X1: return L"4th";
-		case MOUSE_BUTTON_X2: return L"5th";
-		case MOUSE_BUTTON_COUNT: return L"Every";
+		case MOUSE_BUTTON_LEFT:	return L"左键";
+		case MOUSE_BUTTON_RIGHT: return L"右键";
+		case MOUSE_BUTTON_MIDDLE: return L"中键";
+		case MOUSE_BUTTON_X1: return L"返回键";
+		case MOUSE_BUTTON_X2: return L"前进键";
+		case MOUSE_BUTTON_COUNT: return L"所有按键";
 		default: return NULL;
 	}
 }
