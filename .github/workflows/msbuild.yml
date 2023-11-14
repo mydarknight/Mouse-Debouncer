@@ -56,5 +56,5 @@ jobs:
 
     - uses: actions/upload-artifact@master
       with:
-        name: "Mouse Debouncer" 
+        name: "Mouse Debouncer (zh-CN)" 
         path: MOUSED~1\Artifacts\*
